@@ -25,7 +25,7 @@ return [
         |
         */
 
-        'path' => app_path('Models'),
+        'path' => app_path('Models/generated'),
 
         /*
         |--------------------------------------------------------------------------
@@ -285,7 +285,6 @@ return [
             'password_resets',
             'personal_access_tokens',
             'password_reset_tokens',
-            'users'
         ],
 
         /*
