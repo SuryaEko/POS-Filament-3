@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')->constrained('users')->restrictOnDelete()->cascadeOnUpdate();
+            $table->foreignId('customer_id')->constrained('customers')->restrictOnDelete()->cascadeOnUpdate();
             $table->foreignId('cashier_id')->constrained('users')->restrictOnDelete()->cascadeOnUpdate();
             $table->string('invoice_number')->unique();
             $table->decimal('total', 16, 2)->default(0);
