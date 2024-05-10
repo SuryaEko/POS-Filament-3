@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
-use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Product;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -16,7 +15,7 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-cube';
 
     public static function form(Form $form): Form
     {
@@ -25,15 +24,15 @@ class ProductResource extends Resource
                 Forms\Components\Section::make('Information')->schema([
                     Forms\Components\Group::make([
                         Forms\Components\TextInput::make('name')
-                            ->live(onBlur: true)
+                            ->reactive()
                             ->afterStateUpdated(
-                                fn (callable $set, $state) => $set('slug', Str::slug($state))
+                                fn(callable $set, $state, $operation) => $operation == 'create' ? $set('slug', Str::slug($state)):null
                             )->required()
                             ->columnSpan(2),
                         Forms\Components\TextInput::make('slug')
-                            ->unique()
+                            ->unique(ignoreRecord: true)
                             ->required()
-                            ->disabled()
+                            ->disabledOn('create')
                             ->dehydrated()
                             ->columnSpan(2),
                         Forms\Components\Textarea::make('description')
@@ -50,30 +49,29 @@ class ProductResource extends Resource
                             ->directory('products')
                             ->image()
                             ->hiddenLabel()
-//                            ->visibility('private')
+                            ->visibility('private'),
                     ])->columnSpan(1)
                         ->collapsible(),
-
-                    Forms\Components\Section::make('Categories')->schema([
-                        Forms\Components\CheckboxList::make('categories')
-                            ->relationship('categories','name')
-                            ->searchable()
-                            ->hiddenLabel()
-                    ])->columnSpan(1)
-                        ->collapsible(),
-
-                    Forms\Components\Section::make('Pricing')->schema([
-                        Forms\Components\Group::make([
-                            Forms\Components\TextInput::make('price')
-                                ->type('number')
-                                ->required(),
-                            Forms\Components\TextInput::make('stock')
-                                ->type('number')
-                                ->required(),
-                        ]),
-                    ])->columnSpan(1),
-
                 ]),
+
+                Forms\Components\Section::make('Pricing')->schema([
+                    Forms\Components\Group::make([
+                        Forms\Components\TextInput::make('price')
+                            ->numeric()
+                            ->prefix('IDR')
+                            ->required(),
+                        Forms\Components\TextInput::make('stock')
+                            ->type('number')
+                            ->required()->disabledOn('edit'),
+                    ]),
+                ])->columnSpan(1)->collapsible(),
+
+                Forms\Components\Section::make('Categories')->schema([
+                    Forms\Components\CheckboxList::make('categories')
+                        ->relationship('categories', 'name')
+                        ->searchable()
+                        ->hiddenLabel()
+                ])->columnSpan(1)->collapsible(),
 
             ])->columns(3);
     }
@@ -82,10 +80,41 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\ImageColumn::make('thumbnail')
+                    ->visibility('private'),
+                Tables\Columns\TextColumn::make('name')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Name'),
+                Tables\Columns\TextColumn::make('categories.name')->badge(),
+                Tables\Columns\TextColumn::make('price')
+                    ->label('Price')
+                    ->money('IDR'),
+                Tables\Columns\TextColumn::make('stock')
+                    ->label('Stock'),
             ])
             ->filters([
-                //
+                Tables\Filters\Filter::make('Stock')
+                    ->form([
+                        Forms\Components\TextInput::make('start_stock')
+                            ->label('Start Stock')
+                            ->reactive()
+                            ->numeric()
+                            ->requiredWith('end_stock')
+                            ->maxValue(fn(callable $get) => $get('end_stock') ?? null)
+                            ->columnSpan(1),
+                        Forms\Components\TextInput::make('end_stock')
+                            ->label('End Stock')
+                            ->reactive()
+                            ->numeric()
+                            ->requiredWith('start_stock')
+                            ->minValue(fn(callable $get) => $get('start_stock') ?? null)
+                            ->columnSpan(1),
+                    ])->columns(2)
+                    ->query(function ($query, $data) {
+                        if ($data['start_stock'] && $data['end_stock'])
+                            $query->where('stock', '>=', $data['start_stock'])->where('stock', '<=', $data['end_stock']);
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -100,7 +129,7 @@ class ProductResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\CategoriesRelationManager::class,
+//            RelationManagers\CategoriesRelationManager::class,
         ];
     }
 

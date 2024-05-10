@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Storage;
 
 /**
  * Class Product
@@ -20,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string|null $thumbnail
  * @property string|null $description
  * @property float $price
+ * @property int $stock
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
@@ -42,8 +44,22 @@ class Product extends Model
         'slug',
         'thumbnail',
         'description',
-        'price'
+        'price',
+        'stock',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        /** @var Model $model */
+        static::updating(function (self $model) {
+            /* delete old thumbnail */
+            if ($model->isDirty('thumbnail') && ($model->getOriginal('thumbnail') !== null)) {
+                Storage::disk('local')->delete($model->getOriginal('thumbnail'));
+            }
+        });
+    }
 
     public function order_details()
     {
