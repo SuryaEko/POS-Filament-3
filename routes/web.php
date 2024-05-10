@@ -14,5 +14,11 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
+    if (extension_loaded('gd') && function_exists('gd_info')) {
+        echo "hm no, GD is not the problem...";
+    }else{
+        echo "ah! I think we found it ";
+    }
+    die();
     return view('welcome');
 });
