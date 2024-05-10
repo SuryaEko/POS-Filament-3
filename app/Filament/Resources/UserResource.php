@@ -91,7 +91,13 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable(),
             ])
-            ->filters([])
+            ->filters([
+//                Tables\Filters\SelectFilter::make('roles')
+//                    ->relationship('roles', 'name')
+//                    ->multiple()
+//                    ->preload()
+//                    ->searchable()
+            ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
