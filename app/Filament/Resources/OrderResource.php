@@ -25,8 +25,7 @@ class OrderResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Information')
-                    ->schema(self::getDetailFormSchema())
-                    ->columns(3),
+                    ->schema(self::getDetailFormSchema())->columnSpan(1),
                 Forms\Components\Section::make('Order Detail')
                     ->schema([
                         Forms\Components\Repeater::make('order_details')
@@ -79,8 +78,8 @@ class OrderResource extends Resource
                                 if (!$state)
                                     $component->state(0);
                             }),
-                    ])
-            ]);
+                    ])->columnSpan(2),
+            ])->columns(3);
     }
 
     public static function table(Table $table): Table
